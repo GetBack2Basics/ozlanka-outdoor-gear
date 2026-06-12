@@ -1,0 +1,109 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ozlanka}
+      POSTGRES_USER: ${POSTGRES_USER:-ozlanka}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ozlanka} -d ${POSTGRES_DB:-ozlanka}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ozlanka:change-me@db:5432/ozlanka}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET: ${JWT_SECRET:-change-me-too}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-10080}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-change-me-admin}
+      FX_API_URL: ${FX_API_URL:-https://open.er-api.com/v6/latest/AUD}
+      FX_FALLBACK_AUD_LKR: ${FX_FALLBACK_AUD_LKR:-190}
+      HANDLING_FEE_PERCENT: ${HANDLING_FEE_PERCENT:-25}
+      SCRAPE_TARGET_URLS: ${SCRAPE_TARGET_URLS:-https://www.4wdsupacentre.com.au/media/sitemap_4wdsc.xml}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - "8000"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ozlanka:change-me@db:5432/ozlanka}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET: ${JWT_SECRET:-change-me-too}
+      FX_API_URL: ${FX_API_URL:-https://open.er-api.com/v6/latest/AUD}
+      FX_FALLBACK_AUD_LKR: ${FX_FALLBACK_AUD_LKR:-190}
+      HANDLING_FEE_PERCENT: ${HANDLING_FEE_PERCENT:-25}
+      SCRAPE_TARGET_URLS: ${SCRAPE_TARGET_URLS:-https://www.4wdsupacentre.com.au/media/sitemap_4wdsc.xml}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: celery -A app.workers.celery_app.celery worker --loglevel=INFO
+
+  beat:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://ozlanka:change-me@db:5432/ozlanka}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SCRAPE_INTERVAL_SECONDS: ${SCRAPE_INTERVAL_SECONDS:-1209600}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: celery -A app.workers.celery_app.celery beat --loglevel=INFO
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:8000}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-OzLanka Outdoor Gear}
+      NEXT_PUBLIC_HANDLING_FEE_DEFAULT: ${NEXT_PUBLIC_HANDLING_FEE_DEFAULT:-25}
+      JWT_SECRET: ${JWT_SECRET:-change-me-too}
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: npm run dev
+
+volumes:
+  pgdata:
+  redisdata:
+  frontend_node_modules:
