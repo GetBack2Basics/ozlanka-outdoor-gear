@@ -8,10 +8,28 @@ type Product = {
   id: number;
   name: string;
   source_name: string;
+  source_url: string;
+  description: string | null;
+  image_url: string | null;
+  sku: string | null;
   price_aud: number;
   price_lkr: number;
   handling_fee_percent: number;
 };
+
+function buildProductPageUrl(sourceUrl: string) {
+  try {
+    const url = new URL(sourceUrl);
+    url.hash = "";
+    url.search = "";
+    const path = url.pathname.replace(/\.html$/i, "");
+    if (!path || path === "/") return sourceUrl;
+    return `https://www.4wdsupacentre.com.au${path}`;
+  } catch {
+    if (!sourceUrl.includes(".")) return `https://www.4wdsupacentre.com.au${sourceUrl.startsWith("/") ? sourceUrl : "/" + sourceUrl}`;
+    return sourceUrl;
+  }
+}
 
 export default async function HomePage() {
   const response = await backendFetch("/products");
@@ -54,14 +72,46 @@ export default async function HomePage() {
         <h2 className="text-2xl font-semibold">Live products</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <Card key={product.id}>
+            <Card key={product.id} className="overflow-hidden">
               <CardHeader>
                 <CardTitle>{product.name}</CardTitle>
+                {product.sku ? (
+                  <span className="text-xs text-slate-500">SKU: {product.sku}</span>
+                ) : null}
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
+                {product.image_url ? (
+                  <a
+                    href={buildProductPageUrl(product.source_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="h-40 w-full rounded-md object-cover"
+                    />
+                  </a>
+                ) : null}
                 <p className="text-sm text-slate-600">{product.source_name}</p>
-                <p className="text-lg font-semibold">AUD {product.price_aud.toFixed(2)}</p>
-                <p className="text-sm">LKR {product.price_lkr.toFixed(2)}</p>
+                {product.description ? (
+                  <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
+                ) : null}
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-lg font-semibold">AUD {product.price_aud.toFixed(2)}</p>
+                    <p className="text-sm">LKR {product.price_lkr.toFixed(2)}</p>
+                  </div>
+                  <a
+                    href={buildProductPageUrl(product.source_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium underline"
+                  >
+                    4WD Supacentre listing
+                  </a>
+                </div>
               </CardContent>
             </Card>
           ))}

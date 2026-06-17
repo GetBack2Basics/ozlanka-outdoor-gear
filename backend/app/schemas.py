@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 from app.models import ApprovalStatus, RequestStatus, UserRole
@@ -32,7 +34,10 @@ class ProductRead(BaseModel):
     id: int
     name: str
     source_name: str
-    source_url: str
+    source_url: str | None = None
+    sku: str | None = None
+    description: str | None = None
+    image_url: str | None = None
     price_aud: float
     msrp_aud: float | None
     rrp_aud: float | None
@@ -40,6 +45,7 @@ class ProductRead(BaseModel):
     handling_fee_percent: float
     exchange_rate_aud_lkr: float
     active: bool
+    source_lastmod_at: datetime | None = None
 
     class Config:
         from_attributes = True

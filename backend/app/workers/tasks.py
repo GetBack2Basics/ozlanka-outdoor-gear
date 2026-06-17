@@ -8,6 +8,7 @@ from app.models import AppSetting, Product, ScrapeRun
 from app.services.pricing import calculate_lkr_price
 from app.services.scraper import build_pricing_payload, discover_product_targets, run_scrape
 from app.services.exchange import get_aud_to_lkr_rate
+from app.services.images import download_product_image
 from app.workers.celery_app import celery
 
 
@@ -126,6 +127,9 @@ def trigger_scrape(run_id: int | str, source: str = "manual") -> dict[str, int |
                 for key, value in payload.items():
                     setattr(product, key, value)
                 product.handling_fee_percent = handling_fee
+            local_image = download_product_image(scraped.image_url, scraped.source_url)
+            if local_image:
+                product.image_url = local_image
             product.source_lastmod_at = target_lastmod.get(scraped.source_url)
             product.scraped_at = datetime.now(timezone.utc)
             processed_in_db += 1
