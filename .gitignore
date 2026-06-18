@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+.next/
+dist/
+build/
+*.egg-info/
+
+# Cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+celerybeat-schedule
+
+# Runtime
+*.pid
+*.sock
+
+# Secrets
+*.pem
+*.key
+*.crt
+
+# Local scripts
+*.sh
+!start.sh
+!stop.sh
+
+# Test files
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
