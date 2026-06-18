@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { backendFetch } from "@/lib/backend";
+import { CurrencyConverter, PriceDisplay } from "@/components/CurrencyConverter";
 
 type Product = {
   id: number;
@@ -35,9 +36,15 @@ export default async function HomePage() {
   const response = await backendFetch("/products");
   const products: Product[] = response.ok ? await response.json() : [];
 
+  // Get the conversion rate from the first product or use default
+  const defaultRate = products[0]?.price_lkr && products[0]?.price_aud 
+    ? Math.round((products[0].price_lkr / products[0].price_aud) * 100) / 100
+    : 190;
+
   return (
     <main className="space-y-8">
-      <section className="rounded-3xl bg-slate-950 p-8 text-white">
+      <section className="relative rounded-3xl bg-slate-950 p-8 text-white">
+        <CurrencyConverter />
         <Badge className="bg-amber-300 text-slate-950">MVP</Badge>
         <h1 className="mt-4 text-4xl font-bold">OzLanka Outdoor Gear</h1>
         <p className="mt-3 max-w-2xl text-slate-200">
@@ -97,11 +104,8 @@ export default async function HomePage() {
                 {product.description ? (
                   <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
                 ) : null}
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-lg font-semibold">AUD {product.price_aud.toFixed(2)}</p>
-                    <p className="text-sm">LKR {product.price_lkr.toFixed(2)}</p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <PriceDisplay priceAud={product.price_aud} rate={defaultRate} />
                 </div>
               </CardContent>
             </Card>
