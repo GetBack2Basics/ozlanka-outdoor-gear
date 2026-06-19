@@ -16,6 +16,7 @@ type Product = {
   price_aud: number;
   price_lkr: number;
   handling_fee_percent: number;
+  category: string | null;
 };
 
 function buildProductPageUrl(sourceUrl: string) {
@@ -40,6 +41,19 @@ export default async function HomePage() {
   const defaultRate = products[0]?.price_lkr && products[0]?.price_aud 
     ? Math.round((products[0].price_lkr / products[0].price_aud) * 100) / 100
     : 190;
+
+  // Organize products by category — pick first product per category as featured
+  const categoryMap = new Map<string, Product[]>();
+  for (const product of products) {
+    const cat = product.category || "Other";
+    if (!categoryMap.has(cat)) {
+      categoryMap.set(cat, []);
+    }
+    categoryMap.get(cat)!.push(product);
+  }
+
+  // Sort categories alphabetically
+  const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
     <main className="space-y-8">
@@ -75,53 +89,62 @@ export default async function HomePage() {
         ))}
       </section>
 
+      {/* Featured product from each category */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Live products</h2>
+        <h2 className="text-2xl font-semibold">Shop by Category</h2>
+        <p className="text-sm text-slate-500">{sortedCategories.length} categories available</p>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <Card key={product.id} className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>{product.name}</CardTitle>
-                {product.sku ? (
-                  <span className="text-xs text-slate-500">SKU: {product.sku}</span>
-                ) : null}
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <a
-                  href={buildProductPageUrl(product.source_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="h-40 w-full rounded-md object-cover"
-                    />
-                  ) : (
-                    <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
-                      <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{product.name}</span>
-                    </div>
-                  )}
-                </a>
-                {product.description ? (
-                  <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
-                ) : null}
-                <div className="flex items-center justify-between">
-                  <PriceDisplay priceAud={product.price_aud} rate={defaultRate} />
+          {sortedCategories.map(([category, catProducts]) => {
+            const featured = catProducts[0];
+            return (
+              <Card key={category} className="overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>{category}</CardTitle>
+                    <span className="text-xs text-slate-400">{catProducts.length} items</span>
+                  </div>
+                  {featured.sku ? (
+                    <span className="text-xs text-slate-500">SKU: {featured.sku}</span>
+                  ) : null}
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <a
-                    href={buildProductPageUrl(product.source_url)}
+                    href={buildProductPageUrl(featured.source_url)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline"
+                    className="block"
                   >
-                    View on 4WD Supacentre →
+                    {featured.image_url ? (
+                      <img
+                        src={featured.image_url}
+                        alt={featured.name}
+                        className="h-40 w-full rounded-md object-cover"
+                      />
+                    ) : (
+                      <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
+                        <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{featured.name}</span>
+                      </div>
+                    )}
                   </a>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <p className="font-medium text-sm">{featured.name}</p>
+                  {featured.description ? (
+                    <p className="line-clamp-2 text-sm text-slate-600">{featured.description}</p>
+                  ) : null}
+                  <div className="flex items-center justify-between">
+                    <PriceDisplay priceAud={featured.price_aud} rate={defaultRate} />
+                    <a
+                      href={buildProductPageUrl(featured.source_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      View on 4WD Supacentre →
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </section>
     </main>
