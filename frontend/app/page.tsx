@@ -37,12 +37,10 @@ export default async function HomePage() {
   const response = await backendFetch("/products");
   const products: Product[] = response.ok ? await response.json() : [];
 
-  // Get the conversion rate from the first product or use default
-  const defaultRate = products[0]?.price_lkr && products[0]?.price_aud 
+  const defaultRate = products[0]?.price_lkr && products[0]?.price_aud
     ? Math.round((products[0].price_lkr / products[0].price_aud) * 100) / 100
     : 190;
 
-  // Organize products by category — pick first product per category as featured
   const categoryMap = new Map<string, Product[]>();
   for (const product of products) {
     const cat = product.category || "Other";
@@ -52,7 +50,6 @@ export default async function HomePage() {
     categoryMap.get(cat)!.push(product);
   }
 
-  // Sort categories alphabetically
   const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
@@ -89,7 +86,6 @@ export default async function HomePage() {
         ))}
       </section>
 
-      {/* Featured product from each category */}
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">Shop by Category</h2>
         <p className="text-sm text-slate-500">{sortedCategories.length} categories available</p>
@@ -108,10 +104,8 @@ export default async function HomePage() {
                   ) : null}
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <a
-                    href={buildProductPageUrl(featured.source_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href={`/category/${encodeURIComponent(category)}`}
                     className="block"
                   >
                     {featured.image_url ? (
@@ -125,21 +119,19 @@ export default async function HomePage() {
                         <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{featured.name}</span>
                       </div>
                     )}
-                  </a>
+                  </Link>
                   <p className="font-medium text-sm">{featured.name}</p>
                   {featured.description ? (
                     <p className="line-clamp-2 text-sm text-slate-600">{featured.description}</p>
                   ) : null}
                   <div className="flex items-center justify-between">
                     <PriceDisplay priceAud={featured.price_aud} rate={defaultRate} />
-                    <a
-                      href={buildProductPageUrl(featured.source_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      href={`/category/${encodeURIComponent(category)}`}
                       className="text-xs text-blue-600 hover:underline"
                     >
-                      View on 4WD Supacentre →
-                    </a>
+                      View all {catProducts.length} →
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
