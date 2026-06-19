@@ -54,6 +54,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     const cat = p.category || "Other";
     categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
   }
+  const categories = Array.from(categoryMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <main className="space-y-8">
@@ -61,7 +64,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <CurrencyConverter />
         <Badge className="bg-amber-300 text-slate-950">{categoryName}</Badge>
         <h1 className="mt-4 text-4xl font-bold">
-          <Link href={`/category`} className="hover:underline">
+          <Link href="/" className="hover:underline">
             {categoryName}
           </Link>
         </h1>
@@ -75,39 +78,37 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 md:flex-row">
         {/* Sidebar with category list */}
-        <aside className="w-64 shrink-0">
-          <div className="sticky top-4 rounded-xl border border-slate-200 bg-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Categories</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
+        <aside className="w-full shrink-0 md:w-64">
+          <div className="rounded-xl border border-slate-200 bg-white">
+            <div className="px-4 py-3 border-b border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900">Categories</h3>
+            </div>
+            <div className="p-3">
               <ul className="space-y-1 text-sm">
-                {Array.from(categoryMap.entries())
-                  .sort((a, b) => a[0].localeCompare(b[0]))
-                  .map(([cat, count]) => {
-                    const isActive = cat === categoryName;
-                    return (
-                      <li key={cat}>
-                        <Link
-                          href={`/category/${encodeURIComponent(cat)}`}
-                          className={`flex items-center justify-between rounded-md px-3 py-1.5 transition-colors ${
-                            isActive
-                              ? "bg-slate-900 font-medium text-white"
-                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                          }`}
-                        >
-                          <span className="truncate">{cat}</span>
-                          <span className={`ml-2 text-xs ${isActive ? "text-slate-300" : "text-slate-400"}`}>
-                            {count}
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
+                {categories.map(({ name, count }) => {
+                  const isActive = name === categoryName;
+                  return (
+                    <li key={name}>
+                      <Link
+                        href={`/category/${encodeURIComponent(name)}`}
+                        className={`flex items-center justify-between rounded-md px-3 py-1.5 transition-colors ${
+                          isActive
+                            ? "bg-slate-900 font-medium text-white"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        }`}
+                      >
+                        <span className="truncate">{name}</span>
+                        <span className={`ml-2 text-xs ${isActive ? "text-slate-300" : "text-slate-400"}`}>
+                          {count}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
-            </CardContent>
+            </div>
           </div>
         </aside>
 
