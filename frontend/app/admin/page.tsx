@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrapePanel } from "@/components/admin/scrape-panel";
+import { FilteredProductsReview } from "@/components/admin/filtered-products-review";
 import { backendFetchWithAuth } from "@/lib/backend";
 
 type Dashboard = {
@@ -67,6 +68,15 @@ export default async function AdminPage() {
               </Card>
             ))}
           </section>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtered Products Review</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FilteredProductsReview token={token} />
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

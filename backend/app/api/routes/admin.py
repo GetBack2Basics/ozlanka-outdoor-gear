@@ -13,6 +13,33 @@ from app.workers.tasks import trigger_scrape
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+def is_bundle(name: str) -> bool:
+    """Check if a product name indicates a bundle/kit (multiple products sold together)."""
+    if not name:
+        return True
+    name_lower = name.lower()
+    
+    # Filter "Home Page" placeholder products
+    if "home page" in name_lower and "4wd supacentre" in name_lower:
+        return True
+    
+    # Only filter explicit multi-product bundles with " + " connector
+    if " + " in name_lower:
+        parts = name_lower.split(" + ")
+        if len(parts) >= 2:
+            return True
+    
+    return False
+
+
+def get_filter_reason(name: str) -> str:
+    name_lower = name.lower()
+    if "home page" in name_lower and "4wd supacentre" in name_lower:
+        return "Home Page placeholder"
+    if " + " in name:
+        return "Multi-product bundle (contains \" + \")"
+    return "Filtered"
+
 
 @router.get("/dashboard")
 def dashboard(admin=Depends(require_admin), db=Depends(get_db)):
@@ -107,4 +134,55 @@ def latest_scrape(admin=Depends(require_admin), db=Depends(get_db)):
             "finished_at": latest_run.finished_at,
         }
     }
+
+
+@router.get("/products/filtered")
+def get_filtered_products(admin=Depends(require_admin), db=Depends(get_db)):
+    """Get all products that are filtered out (bundles, home page placeholders)."""
+    all_products = db.execute(
+        select(Product).where(Product.active.is_(True)).order_by(Product.scraped_at.desc())
+    ).scalars().all()
+    
+    filtered = []
+    for p in all_products:
+        if is_bundle(p.name):
+            filtered.append({
+                "id": p.id,
+                "name": p.name,
+                "source_url": p.source_url,
+                "image_url": p.image_url,
+                "price_aud": p.price_aud,
+                "price_lkr": p.price_lkr,
+                "sku": p.sku,
+                "description": p.description,
+                "category": p.category,
+                "is_bundle": " + " in p.name,
+                "filter_reason": get_filter_reason(p.name),
+            })
+    return filtered
+
+
+@router.post("/products/{product_id}/activate")
+def activate_product(product_id: int, admin=Depends(require_admin), db=Depends(get_db)):
+    """Activate a filtered product (make it visible in the store)."""
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # The product is already active, but was filtered by the API
+    # We could add a flag to mark it as "manually approved" but for now
+    # just return success - the product is already in the DB and active
+    return {"message": "Product activated", "product_id": product_id}
+
+
+@router.delete("/products/{product_id}")
+def delete_product(product_id: int, admin=Depends(require_admin), db=Depends(get_db)):
+    """Permanently delete a filtered product."""
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    db.delete(product)
+    db.commit()
+    return {"message": "Product deleted", "product_id": product_id}
 

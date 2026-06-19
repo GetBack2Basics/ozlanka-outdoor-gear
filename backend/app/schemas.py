@@ -36,6 +36,7 @@ class ProductRead(BaseModel):
     source_name: str
     source_url: str | None = None
     sku: str | None = None
+    category: str | None = None
     description: str | None = None
     image_url: str | None = None
     price_aud: float

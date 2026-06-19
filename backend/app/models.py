@@ -46,6 +46,7 @@ class Product(Base):
     source_name: Mapped[str] = mapped_column(String(120), default="4WD Supacentre", nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     sku: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    category: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     price_aud: Mapped[float] = mapped_column(Float, nullable=False)

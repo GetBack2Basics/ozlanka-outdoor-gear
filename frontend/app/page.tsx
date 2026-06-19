@@ -87,25 +87,37 @@ export default async function HomePage() {
                 ) : null}
               </CardHeader>
               <CardContent className="space-y-3">
-                {product.image_url ? (
-                  <a
-                    href={buildProductPageUrl(product.source_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
+                <a
+                  href={buildProductPageUrl(product.source_url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  {product.image_url ? (
                     <img
                       src={product.image_url}
                       alt={product.name}
                       className="h-40 w-full rounded-md object-cover"
                     />
-                  </a>
-                ) : null}
+                  ) : (
+                    <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
+                      <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{product.name}</span>
+                    </div>
+                  )}
+                </a>
                 {product.description ? (
                   <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
                 ) : null}
                 <div className="flex items-center justify-between">
                   <PriceDisplay priceAud={product.price_aud} rate={defaultRate} />
+                  <a
+                    href={buildProductPageUrl(product.source_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    View on 4WD Supacentre →
+                  </a>
                 </div>
               </CardContent>
             </Card>

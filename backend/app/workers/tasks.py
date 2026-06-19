@@ -54,10 +54,6 @@ def trigger_scrape(run_id: int | str, source: str = "manual") -> dict[str, int |
         return {"run_id": 0, "count": 0, "status": "skipped"}
     run.source = source
     product_targets = discover_product_targets(urls)
-    # Limit to 50 products max
-    MAX_PRODUCTS = 50
-    if len(product_targets) > MAX_PRODUCTS:
-        product_targets = product_targets[:MAX_PRODUCTS]
     run.total_items = len(product_targets)
     run.processed_items = 0
     run.progress_percent = 0
