@@ -48,75 +48,124 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     ? Math.round((allProducts[0].price_lkr / allProducts[0].price_aud) * 100) / 100
     : 190;
 
+  // Build category list with counts
+  const categoryMap = new Map<string, number>();
+  for (const p of allProducts) {
+    const cat = p.category || "Other";
+    categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+  }
+
   return (
     <main className="space-y-8">
       <section className="relative rounded-3xl bg-slate-950 p-8 text-white">
         <CurrencyConverter />
         <Badge className="bg-amber-300 text-slate-950">{categoryName}</Badge>
-        <h1 className="mt-4 text-4xl font-bold">{categoryName}</h1>
+        <h1 className="mt-4 text-4xl font-bold">
+          <Link href={`/category`} className="hover:underline">
+            {categoryName}
+          </Link>
+        </h1>
         <p className="mt-3 max-w-2xl text-slate-200">
           {products.length} products in this category from 4WD Supacentre, Australia.
         </p>
         <div className="mt-6 flex gap-3">
           <Link href="/" className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-950">
-            ← Back to all categories
+            ← Back to home
           </Link>
         </div>
       </section>
 
-      {products.length === 0 ? (
-        <p className="text-slate-500 text-center py-12">No products found in this category.</p>
-      ) : (
-        <section className="space-y-4">
+      <div className="flex gap-6">
+        {/* Sidebar with category list */}
+        <aside className="w-64 shrink-0">
+          <div className="sticky top-4 rounded-xl border border-slate-200 bg-white">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Categories</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <ul className="space-y-1 text-sm">
+                {Array.from(categoryMap.entries())
+                  .sort((a, b) => a[0].localeCompare(b[0]))
+                  .map(([cat, count]) => {
+                    const isActive = cat === categoryName;
+                    return (
+                      <li key={cat}>
+                        <Link
+                          href={`/category/${encodeURIComponent(cat)}`}
+                          className={`flex items-center justify-between rounded-md px-3 py-1.5 transition-colors ${
+                            isActive
+                              ? "bg-slate-900 font-medium text-white"
+                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          }`}
+                        >
+                          <span className="truncate">{cat}</span>
+                          <span className={`ml-2 text-xs ${isActive ? "text-slate-300" : "text-slate-400"}`}>
+                            {count}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+              </ul>
+            </CardContent>
+          </div>
+        </aside>
+
+        {/* Product grid */}
+        <div className="flex-1 space-y-4">
           <h2 className="text-2xl font-semibold">{products.length} Products</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => (
-              <Card key={product.id} className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle>{product.name}</CardTitle>
-                  {product.sku ? (
-                    <span className="text-xs text-slate-500">SKU: {product.sku}</span>
-                  ) : null}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <a
-                    href={buildProductPageUrl(product.source_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="h-40 w-full rounded-md object-cover"
-                      />
-                    ) : (
-                      <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
-                        <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{product.name}</span>
-                      </div>
-                    )}
-                  </a>
-                  {product.description ? (
-                    <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
-                  ) : null}
-                  <div className="flex items-center justify-between">
-                    <PriceDisplay priceAud={product.price_aud} rate={defaultRate} />
+          {products.length === 0 ? (
+            <p className="text-slate-500 text-center py-12">No products found in this category.</p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => (
+                <Card key={product.id} className="overflow-hidden">
+                  <CardHeader>
+                    <CardTitle>{product.name}</CardTitle>
+                    {product.sku ? (
+                      <span className="text-xs text-slate-500">SKU: {product.sku}</span>
+                    ) : null}
+                  </CardHeader>
+                  <CardContent className="space-y-3">
                     <a
                       href={buildProductPageUrl(product.source_url)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline"
+                      className="block"
                     >
-                      View on 4WD Supacentre →
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="h-40 w-full rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
+                          <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{product.name}</span>
+                        </div>
+                      )}
                     </a>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
+                    {product.description ? (
+                      <p className="line-clamp-3 text-sm text-slate-600">{product.description}</p>
+                    ) : null}
+                    <div className="flex items-center justify-between">
+                      <PriceDisplay priceAud={product.price_aud} rate={defaultRate} />
+                      <a
+                        href={buildProductPageUrl(product.source_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        View on 4WD Supacentre →
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
