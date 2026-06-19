@@ -86,59 +86,91 @@ export default async function HomePage() {
         ))}
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Shop by Category</h2>
-        <p className="text-sm text-slate-500">{sortedCategories.length} categories available</p>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sortedCategories.map(([category, catProducts]) => {
-            const featured = catProducts[0];
-            return (
-              <Card key={category} className="overflow-hidden">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{category}</CardTitle>
-                    <span className="text-xs text-slate-400">{catProducts.length} items</span>
-                  </div>
-                  {featured.sku ? (
-                    <span className="text-xs text-slate-500">SKU: {featured.sku}</span>
-                  ) : null}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Link
-                    href={`/category/${encodeURIComponent(category)}`}
-                    className="block"
-                  >
-                    {featured.image_url ? (
-                      <img
-                        src={featured.image_url}
-                        alt={featured.name}
-                        className="h-40 w-full rounded-md object-cover"
-                      />
-                    ) : (
-                      <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
-                        <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{featured.name}</span>
-                      </div>
-                    )}
-                  </Link>
-                  <p className="font-medium text-sm">{featured.name}</p>
-                  {featured.description ? (
-                    <p className="line-clamp-2 text-sm text-slate-600">{featured.description}</p>
-                  ) : null}
-                  <div className="flex items-center justify-between">
-                    <PriceDisplay priceAud={featured.price_aud} rate={defaultRate} />
+      <div className="flex flex-col gap-6 md:flex-row">
+        {/* Sidebar with category list */}
+        <aside className="w-full shrink-0 md:w-64">
+          <div className="rounded-xl border border-slate-200 bg-white">
+            <div className="px-4 py-3 border-b border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900">Categories</h3>
+            </div>
+            <div className="p-3">
+              <ul className="space-y-1 text-sm">
+                {sortedCategories.map(([category, catProducts]) => (
+                  <li key={category}>
                     <Link
                       href={`/category/${encodeURIComponent(category)}`}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="flex items-center justify-between rounded-md px-3 py-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                     >
-                      View all {catProducts.length} →
+                      <span className="truncate">{category}</span>
+                      <span className="ml-2 text-xs text-slate-400">{catProducts.length}</span>
                     </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </aside>
+
+        {/* Featured product from each category */}
+        <div className="flex-1 space-y-4">
+          <h2 className="text-2xl font-semibold">Shop by Category</h2>
+          <p className="text-sm text-slate-500">{sortedCategories.length} categories &middot; {products.length} products</p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {sortedCategories.map(([category, catProducts]) => {
+              const featured = catProducts[0];
+              return (
+                <Card key={category} className="overflow-hidden">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href={`/category/${encodeURIComponent(category)}`}
+                        className="text-lg font-semibold hover:underline"
+                      >
+                        {category}
+                      </Link>
+                      <span className="text-xs text-slate-400">{catProducts.length} items</span>
+                    </div>
+                    {featured.sku ? (
+                      <span className="text-xs text-slate-500">SKU: {featured.sku}</span>
+                    ) : null}
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Link
+                      href={`/category/${encodeURIComponent(category)}`}
+                      className="block"
+                    >
+                      {featured.image_url ? (
+                        <img
+                          src={featured.image_url}
+                          alt={featured.name}
+                          className="h-40 w-full rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
+                          <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{featured.name}</span>
+                        </div>
+                      )}
+                    </Link>
+                    <p className="font-medium text-sm">{featured.name}</p>
+                    {featured.description ? (
+                      <p className="line-clamp-2 text-sm text-slate-600">{featured.description}</p>
+                    ) : null}
+                    <div className="flex items-center justify-between">
+                      <PriceDisplay priceAud={featured.price_aud} rate={defaultRate} />
+                      <Link
+                        href={`/category/${encodeURIComponent(category)}`}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        View all {catProducts.length} →
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
