@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -104,8 +103,7 @@ const SAVED_DEFAULT_SETTINGS: SiteSettings = {
 
 async function updateSettings(formData: FormData) {
   "use server";
-  const cookieStore = await cookies();
-  const token = cookieStore.get("ozlanka_token")?.value;
+  const token = (formData.get("token") as string | null) ?? undefined;
   if (!token) return redirect("/login");
 
   const panelHeaders: Record<string, string> = {};
@@ -146,12 +144,9 @@ async function updateSettings(formData: FormData) {
   if (Object.keys(typography).length) payload["typography"] = typography;
   if (Object.keys(style).length) payload["style"] = style;
 
-  const res = await fetch(`admin/settings`, {
+  await backendFetchWithAuth("/admin/settings", {
     method: "PUT",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${token}`,
-    },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
     cache: "no-store",
   });
@@ -269,7 +264,8 @@ export default async function AdminPage() {
               <CardTitle>Site Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <form action={updateSettings} className="space-y-6">
+              <form action={updateSettings} className="space-y-6" suppressHydrationWarning>
+                <input type="hidden" name="token" value={token} />
                 {/* Hero */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-slate-700">Hero Section</h4>
