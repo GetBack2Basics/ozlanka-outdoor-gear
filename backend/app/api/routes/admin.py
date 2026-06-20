@@ -238,9 +238,16 @@ def _get_site_settings(db) -> dict:
     return merged
 
 
-@router.get("/settings")
-def get_site_settings(admin=Depends(require_admin), db=Depends(get_db)):
-    return _get_site_settings(db)
+@router.get("/settings/public")
+def get_public_site_settings(db=Depends(get_db)):
+    """Public site settings - only returns non-admin fields."""
+    settings = _get_site_settings(db)
+    return {
+        "hero_title": settings.get("hero_title", ""),
+        "hero_subtitle": settings.get("hero_subtitle", ""),
+        "footer_text": settings.get("footer_text", ""),
+        "product_template": settings.get("product_template", {}),
+    }
 
 
 class SiteSettingsPayload(BaseModel):

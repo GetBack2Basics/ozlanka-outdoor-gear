@@ -19,6 +19,22 @@ type Product = {
   category: string | null;
 };
 
+type SiteSettings = {
+  hero_title: string;
+  hero_subtitle: string;
+  footer_text: string;
+  product_template: {
+    show_image: boolean;
+    show_sku: boolean;
+    show_category: boolean;
+    show_description: boolean;
+    show_price_aud: boolean;
+    show_price_lkr: boolean;
+    show_view_link: boolean;
+    custom_label: string;
+  };
+};
+
 function buildProductPageUrl(sourceUrl: string) {
   try {
     const url = new URL(sourceUrl);
@@ -34,8 +50,17 @@ function buildProductPageUrl(sourceUrl: string) {
 }
 
 export default async function HomePage() {
-  const response = await backendFetch("/products");
-  const products: Product[] = response.ok ? await response.json() : [];
+  const [productsRes, settingsRes] = await Promise.all([
+    backendFetch("/products"),
+    backendFetch("/admin/settings/public"),
+  ]);
+  const products: Product[] = productsRes.ok ? await productsRes.json() : [];
+  const settings: SiteSettings = settingsRes.ok ? await settingsRes.json() : {
+    hero_title: "OzLanka Outdoor Gear",
+    hero_subtitle: "Request outdoor gear from Australia with manual approval, LKR pricing, and clear shipping and customs terms.",
+    footer_text: "",
+    product_template: { show_image: true, show_sku: true, show_category: true, show_description: true, show_price_aud: true, show_price_lkr: true, show_view_link: true, custom_label: "" },
+  };
 
   const defaultRate = products[0]?.price_lkr && products[0]?.price_aud
     ? Math.round((products[0].price_lkr / products[0].price_aud) * 100) / 100
@@ -51,16 +76,15 @@ export default async function HomePage() {
   }
 
   const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const tmpl = settings.product_template;
 
   return (
     <main className="space-y-8">
       <section className="relative rounded-3xl bg-slate-950 p-8 text-white">
         <CurrencyConverter />
         <Badge className="bg-amber-300 text-slate-950">MVP</Badge>
-        <h1 className="mt-4 text-4xl font-bold">OzLanka Outdoor Gear</h1>
-        <p className="mt-3 max-w-2xl text-slate-200">
-          Request outdoor gear from Australia with manual approval, LKR pricing, and clear shipping and customs terms.
-        </p>
+        <h1 className="mt-4 text-4xl font-bold">{settings.hero_title}</h1>
+        <p className="mt-3 max-w-2xl text-slate-200">{settings.hero_subtitle}</p>
         <div className="mt-6 flex gap-3">
           <Link href="/signup" className="rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-950">
             Create account
@@ -114,7 +138,7 @@ export default async function HomePage() {
         {/* Featured product from each category */}
         <div className="flex-1 space-y-4">
           <h2 className="text-2xl font-semibold">Shop by Category</h2>
-          <p className="text-sm text-slate-500">{sortedCategories.length} categories &middot; {products.length} products</p>
+          <p className="text-sm text-slate-500">{sortedCategories.length} categories · {products.length} products</p>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {sortedCategories.map(([category, catProducts]) => {
               const featured = catProducts[0];
@@ -130,39 +154,39 @@ export default async function HomePage() {
                       </Link>
                       <span className="text-xs text-slate-400">{catProducts.length} items</span>
                     </div>
-                    {featured.sku ? (
+                    {tmpl.show_sku && featured.sku ? (
                       <span className="text-xs text-slate-500">SKU: {featured.sku}</span>
                     ) : null}
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Link
-                      href={`/category/${encodeURIComponent(category)}`}
-                      className="block"
-                    >
-                      {featured.image_url ? (
-                        <img
-                          src={featured.image_url}
-                          alt={featured.name}
-                          className="h-40 w-full rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
-                          <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{featured.name}</span>
-                        </div>
-                      )}
-                    </Link>
-                    <p className="font-medium text-sm">{featured.name}</p>
-                    {featured.description ? (
+                    {tmpl.show_image ? (
+                      <Link href={`/category/${encodeURIComponent(category)}`} className="block">
+                        {featured.image_url ? (
+                          <img
+                            src={featured.image_url}
+                            alt={featured.name}
+                            className="h-40 w-full rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="h-40 w-full rounded-md bg-slate-100 flex items-center justify-center">
+                            <span className="text-slate-400 text-sm text-center px-4 line-clamp-3">{featured.name}</span>
+                          </div>
+                        )}
+                      </Link>
+                    ) : null}
+                    {tmpl.show_description && featured.description ? (
                       <p className="line-clamp-2 text-sm text-slate-600">{featured.description}</p>
                     ) : null}
                     <div className="flex items-center justify-between">
                       <PriceDisplay priceAud={featured.price_aud} rate={defaultRate} />
-                      <Link
-                        href={`/category/${encodeURIComponent(category)}`}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        View all {catProducts.length} →
-                      </Link>
+                      {tmpl.show_view_link ? (
+                        <Link
+                          href={`/category/${encodeURIComponent(category)}`}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          View all {catProducts.length} →
+                        </Link>
+                      ) : null}
                     </div>
                   </CardContent>
                 </Card>
