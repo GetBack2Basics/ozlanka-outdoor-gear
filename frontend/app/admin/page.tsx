@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrapePanel } from "@/components/admin/scrape-panel";
 import { FilteredProductsReview } from "@/components/admin/filtered-products-review";
@@ -54,9 +55,19 @@ type SiteSettings = {
   };
   hero_title: string;
   hero_subtitle: string;
+  typography: {
+    heading_font: string;
+    body_font: string;
+    base_size: string;
+  };
+  style: {
+    primary_color: string;
+    accent_color: string;
+    radius: string;
+  };
 };
 
-const DEFAULT_SETTINGS: SiteSettings = {
+const SAVED_DEFAULT_SETTINGS: SiteSettings = {
   panel_headers: {
     users: "Users",
     pending: "Pending",
@@ -79,6 +90,16 @@ const DEFAULT_SETTINGS: SiteSettings = {
   },
   hero_title: "OzLanka Outdoor Gear",
   hero_subtitle: "Request outdoor gear from Australia with manual approval, LKR pricing, and clear shipping and customs terms.",
+  typography: {
+    heading_font: "Inter",
+    body_font: "Inter",
+    base_size: "16",
+  },
+  style: {
+    primary_color: "#0f172a",
+    accent_color: "#0ea5e9",
+    radius: "12",
+  },
 };
 
 async function updateSettings(formData: FormData) {
@@ -100,6 +121,18 @@ async function updateSettings(formData: FormData) {
   const customLabel = formData.get("pt_custom_label");
   if (customLabel) productTemplate["custom_label"] = String(customLabel);
 
+  const typography: Record<string, string> = {};
+  for (const key of ["heading_font", "body_font", "base_size"]) {
+    const val = formData.get(`typo_${key}`);
+    if (val) typography[key] = String(val);
+  }
+
+  const style: Record<string, string> = {};
+  for (const key of ["primary_color", "accent_color", "radius"]) {
+    const val = formData.get(`style_${key}`);
+    if (val) style[key] = String(val);
+  }
+
   const payload: Record<string, unknown> = {
     panel_headers: panelHeaders,
     product_template: productTemplate,
@@ -110,6 +143,8 @@ async function updateSettings(formData: FormData) {
   if (heroTitle) payload["hero_title"] = String(heroTitle);
   const heroSubtitle = formData.get("hero_subtitle");
   if (heroSubtitle) payload["hero_subtitle"] = String(heroSubtitle);
+  if (Object.keys(typography).length) payload["typography"] = typography;
+  if (Object.keys(style).length) payload["style"] = style;
 
   const res = await fetch(`admin/settings`, {
     method: "PUT",
@@ -131,20 +166,16 @@ export default async function AdminPage() {
 
   const settingsResponse = token ? await backendFetchWithAuth("/admin/settings") : null;
   const remoteSettings = settingsResponse?.ok ? await settingsResponse.json() : null;
-  const settings: SiteSettings = remoteSettings ?? DEFAULT_SETTINGS;
 
-  const currentValues = [
-    { label: "Hero title", value: settings.hero_title },
-    { label: "Hero subtitle", value: settings.hero_subtitle },
-    { label: "Footer text", value: settings.footer_text || "(empty)" },
-    { label: "Users header", value: settings.panel_headers.users },
-    { label: "Pending header", value: settings.panel_headers.pending },
-    { label: "Products header", value: settings.panel_headers.products },
-    { label: "Requests header", value: settings.panel_headers.requests },
-    { label: "Filtered products header", value: settings.panel_headers.filtered_products },
-    { label: "Handling fee header", value: settings.panel_headers.handling_fee },
-    { label: "Pending users header", value: settings.panel_headers.pending_users },
-  ];
+  const runtimeDefaults = reregisterAdminSettingsDefaults();
+  const settings: SiteSettings = {
+    ...runtimeDefaults,
+    ...(remoteSettings ?? {}),
+    panel_headers: { ...runtimeDefaults.panel_headers, ...(remoteSettings?.panel_headers ?? {}) },
+    product_template: { ...runtimeDefaults.product_template, ...(remoteSettings?.product_template ?? {}) },
+    typography: { ...runtimeDefaults.typography, ...(remoteSettings?.typography ?? {}) },
+    style: { ...runtimeDefaults.style, ...(remoteSettings?.style ?? {}) },
+  };
 
   return (
     <div className="space-y-6">
@@ -231,24 +262,7 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Current Settings Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Site Settings Values</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-2 text-sm">
-                {currentValues.map((item) => (
-                  <div key={item.label} className="flex flex-col gap-1 rounded-md border border-slate-200 p-3">
-                    <span className="text-xs font-semibold uppercase text-slate-500">{item.label}</span>
-                    <span className="text-slate-900">{item.value || "(empty)"}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Site Settings Editor */}
+          {/* Editable Current Settings */}
           <Card>
             <CardHeader>
               <CardTitle>Site Settings</CardTitle>
@@ -291,6 +305,44 @@ export default async function AdminPage() {
                   <div>
                     <Label htmlFor="footer_text">Footer text</Label>
                     <Textarea id="footer_text" name="footer_text" defaultValue={settings.footer_text} rows={2} />
+                  </div>
+                </div>
+
+                {/* Typography */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-slate-700">Typography</h4>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <Label htmlFor="typo_heading_font">Heading font</Label>
+                      <Input id="typo_heading_font" name="typo_heading_font" defaultValue={settings.typography.heading_font} />
+                    </div>
+                    <div>
+                      <Label htmlFor="typo_body_font">Body font</Label>
+                      <Input id="typo_body_font" name="typo_body_font" defaultValue={settings.typography.body_font} />
+                    </div>
+                    <div>
+                      <Label htmlFor="typo_base_size">Base font size (px)</Label>
+                      <Input id="typo_base_size" name="typo_base_size" defaultValue={settings.typography.base_size} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Style */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-slate-700">Style</h4>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <Label htmlFor="style_primary_color">Primary color</Label>
+                      <Input id="style_primary_color" name="style_primary_color" defaultValue={settings.style.primary_color} />
+                    </div>
+                    <div>
+                      <Label htmlFor="style_accent_color">Accent color</Label>
+                      <Input id="style_accent_color" name="style_accent_color" defaultValue={settings.style.accent_color} />
+                    </div>
+                    <div>
+                      <Label htmlFor="style_radius">Corner radius (px)</Label>
+                      <Input id="style_radius" name="style_radius" defaultValue={settings.style.radius} />
+                    </div>
                   </div>
                 </div>
 
