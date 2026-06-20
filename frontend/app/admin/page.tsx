@@ -86,13 +86,14 @@ async function updateSettings(formData: FormData) {
   const heroSubtitle = formData.get("hero_subtitle");
   if (heroSubtitle) payload["hero_subtitle"] = String(heroSubtitle);
 
-  const res = await fetch(`${process.env.BACKEND_INTERNAL_URL ?? "http://backend:8000"}/api/admin/settings`, {
+  const res = await fetch(`admin/settings`, {
     method: "PUT",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
+    cache: "no-store",
   });
   return redirect("/admin");
 }
