@@ -1,4 +1,7 @@
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from datetime import datetime
 
@@ -186,3 +189,88 @@ def delete_product(product_id: int, admin=Depends(require_admin), db=Depends(get
     db.commit()
     return {"message": "Product deleted", "product_id": product_id}
 
+
+# ─── Site Settings (admin-editable UI text) ────────────────────────────────
+
+DEFAULT_SITE_SETTINGS = {
+    "panel_headers": {
+        "users": "Users",
+        "pending": "Pending",
+        "products": "Products",
+        "requests": "Requests",
+        "filtered_products": "Filtered Products Review",
+        "handling_fee": "Handling fee",
+        "pending_users": "Pending users",
+    },
+    "footer_text": "© 2026 OzLanka Outdoor Gear. All rights reserved.",
+    "product_template": {
+        "show_image": True,
+        "show_sku": True,
+        "show_category": True,
+        "show_description": True,
+        "show_price_aud": True,
+        "show_price_lkr": True,
+        "show_view_link": True,
+        "custom_label": "",
+    },
+    "hero_title": "OzLanka Outdoor Gear",
+    "hero_subtitle": "Request outdoor gear from Australia with manual approval, LKR pricing, and clear shipping and customs terms.",
+}
+
+
+def _get_site_settings(db) -> dict:
+    """Load site settings from DB, merging with defaults for any missing keys."""
+    setting = db.execute(select(AppSetting).where(AppSetting.key == "site_settings")).scalar_one_or_none()
+    if setting is None:
+        return DEFAULT_SITE_SETTINGS.copy()
+    try:
+        stored = json.loads(setting.value)
+    except (json.JSONDecodeError, TypeError):
+        return DEFAULT_SITE_SETTINGS.copy()
+    # Deep-merge: stored overrides, but keep any new keys from defaults
+    merged = DEFAULT_SITE_SETTINGS.copy()
+    for key in merged:
+        if key in stored:
+            if isinstance(merged[key], dict) and isinstance(stored[key], dict):
+                merged[key].update(stored[key])
+            else:
+                merged[key] = stored[key]
+    return merged
+
+
+@router.get("/settings")
+def get_site_settings(admin=Depends(require_admin), db=Depends(get_db)):
+    return _get_site_settings(db)
+
+
+class SiteSettingsPayload(BaseModel):
+    panel_headers: dict | None = None
+    footer_text: str | None = None
+    product_template: dict | None = None
+    hero_title: str | None = None
+    hero_subtitle: str | None = None
+
+
+@router.put("/settings")
+def update_site_settings(payload: SiteSettingsPayload, admin=Depends(require_admin), db=Depends(get_db)):
+    current = _get_site_settings(db)
+    # Merge provided fields into current
+    if payload.panel_headers is not None:
+        current["panel_headers"].update(payload.panel_headers)
+    if payload.footer_text is not None:
+        current["footer_text"] = payload.footer_text
+    if payload.product_template is not None:
+        current["product_template"].update(payload.product_template)
+    if payload.hero_title is not None:
+        current["hero_title"] = payload.hero_title
+    if payload.hero_subtitle is not None:
+        current["hero_subtitle"] = payload.hero_subtitle
+
+    setting = db.execute(select(AppSetting).where(AppSetting.key == "site_settings")).scalar_one_or_none()
+    if setting is None:
+        setting = AppSetting(key="site_settings", value=json.dumps(current))
+        db.add(setting)
+    else:
+        setting.value = json.dumps(current)
+    db.commit()
+    return current
