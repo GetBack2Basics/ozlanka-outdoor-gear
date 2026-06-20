@@ -56,6 +56,31 @@ type SiteSettings = {
   hero_subtitle: string;
 };
 
+const DEFAULT_SETTINGS: SiteSettings = {
+  panel_headers: {
+    users: "Users",
+    pending: "Pending",
+    products: "Products",
+    requests: "Requests",
+    filtered_products: "Filtered Products Review",
+    handling_fee: "Handling fee",
+    pending_users: "Pending users",
+  },
+  footer_text: "",
+  product_template: {
+    show_image: true,
+    show_sku: true,
+    show_category: true,
+    show_description: true,
+    show_price_aud: true,
+    show_price_lkr: true,
+    show_view_link: true,
+    custom_label: "",
+  },
+  hero_title: "OzLanka Outdoor Gear",
+  hero_subtitle: "Request outdoor gear from Australia with manual approval, LKR pricing, and clear shipping and customs terms.",
+};
+
 async function updateSettings(formData: FormData) {
   "use server";
   const cookieStore = await cookies();
@@ -105,7 +130,21 @@ export default async function AdminPage() {
   const dashboard: Dashboard | null = response?.ok ? await response.json() : null;
 
   const settingsResponse = token ? await backendFetchWithAuth("/admin/settings") : null;
-  const settings: SiteSettings | null = settingsResponse?.ok ? await settingsResponse.json() : null;
+  const remoteSettings = settingsResponse?.ok ? await settingsResponse.json() : null;
+  const settings: SiteSettings = remoteSettings ?? DEFAULT_SETTINGS;
+
+  const currentValues = [
+    { label: "Hero title", value: settings.hero_title },
+    { label: "Hero subtitle", value: settings.hero_subtitle },
+    { label: "Footer text", value: settings.footer_text || "(empty)" },
+    { label: "Users header", value: settings.panel_headers.users },
+    { label: "Pending header", value: settings.panel_headers.pending },
+    { label: "Products header", value: settings.panel_headers.products },
+    { label: "Requests header", value: settings.panel_headers.requests },
+    { label: "Filtered products header", value: settings.panel_headers.filtered_products },
+    { label: "Handling fee header", value: settings.panel_headers.handling_fee },
+    { label: "Pending users header", value: settings.panel_headers.pending_users },
+  ];
 
   return (
     <div className="space-y-6">
@@ -192,6 +231,23 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
+          {/* Current Settings Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Site Settings Values</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 text-sm">
+                {currentValues.map((item) => (
+                  <div key={item.label} className="flex flex-col gap-1 rounded-md border border-slate-200 p-3">
+                    <span className="text-xs font-semibold uppercase text-slate-500">{item.label}</span>
+                    <span className="text-slate-900">{item.value || "(empty)"}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Site Settings Editor */}
           <Card>
             <CardHeader>
@@ -204,11 +260,11 @@ export default async function AdminPage() {
                   <h4 className="text-sm font-semibold text-slate-700">Hero Section</h4>
                   <div>
                     <Label htmlFor="hero_title">Title</Label>
-                    <Input id="hero_title" name="hero_title" defaultValue={settings?.hero_title} />
+                    <Input id="hero_title" name="hero_title" defaultValue={settings.hero_title} />
                   </div>
                   <div>
                     <Label htmlFor="hero_subtitle">Subtitle</Label>
-                    <Textarea id="hero_subtitle" name="hero_subtitle" defaultValue={settings?.hero_subtitle} rows={2} />
+                    <Textarea id="hero_subtitle" name="hero_subtitle" defaultValue={settings.hero_subtitle} rows={2} />
                   </div>
                 </div>
 
@@ -222,7 +278,7 @@ export default async function AdminPage() {
                         <Input
                           id={`panel_header_${key}`}
                           name={`panel_header_${key}`}
-                          defaultValue={settings?.panel_headers?.[key] ?? ""}
+                          defaultValue={settings.panel_headers[key] ?? ""}
                         />
                       </div>
                     ))}
@@ -234,7 +290,7 @@ export default async function AdminPage() {
                   <h4 className="text-sm font-semibold text-slate-700">Footer</h4>
                   <div>
                     <Label htmlFor="footer_text">Footer text</Label>
-                    <Textarea id="footer_text" name="footer_text" defaultValue={settings?.footer_text} rows={2} />
+                    <Textarea id="footer_text" name="footer_text" defaultValue={settings.footer_text} rows={2} />
                   </div>
                 </div>
 
@@ -247,7 +303,7 @@ export default async function AdminPage() {
                         <input
                           type="checkbox"
                           name={`pt_${key}`}
-                          defaultChecked={settings?.product_template?.[key] !== false}
+                          defaultChecked={settings.product_template[key] !== false}
                           className="h-4 w-4 rounded border-slate-300"
                         />
                         {key.replace("show_", "").replace(/_/g, " ")}
@@ -256,7 +312,7 @@ export default async function AdminPage() {
                   </div>
                   <div>
                     <Label htmlFor="pt_custom_label">Custom label (added to each product card)</Label>
-                    <Input id="pt_custom_label" name="pt_custom_label" defaultValue={settings?.product_template?.custom_label ?? ""} />
+                    <Input id="pt_custom_label" name="pt_custom_label" defaultValue={settings.product_template.custom_label ?? ""} />
                   </div>
                 </div>
 
