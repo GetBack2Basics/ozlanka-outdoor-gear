@@ -166,16 +166,17 @@ export default async function AdminPage() {
 
   const settingsResponse = token ? await backendFetchWithAuth("/admin/settings") : null;
   const remoteSettings = settingsResponse?.ok ? await settingsResponse.json() : null;
-
-  const runtimeDefaults = reregisterAdminSettingsDefaults();
-  const settings: SiteSettings = {
-    ...runtimeDefaults,
-    ...(remoteSettings ?? {}),
-    panel_headers: { ...runtimeDefaults.panel_headers, ...(remoteSettings?.panel_headers ?? {}) },
-    product_template: { ...runtimeDefaults.product_template, ...(remoteSettings?.product_template ?? {}) },
-    typography: { ...runtimeDefaults.typography, ...(remoteSettings?.typography ?? {}) },
-    style: { ...runtimeDefaults.style, ...(remoteSettings?.style ?? {}) },
-  };
+  const baseDefaults = remoteSettings
+    ? {
+        ...SAVED_DEFAULT_SETTINGS,
+        ...remoteSettings,
+        panel_headers: { ...SAVED_DEFAULT_SETTINGS.panel_headers, ...(remoteSettings.panel_headers ?? {}) },
+        product_template: { ...SAVED_DEFAULT_SETTINGS.product_template, ...(remoteSettings.product_template ?? {}) },
+        typography: { ...SAVED_DEFAULT_SETTINGS.typography, ...(remoteSettings.typography ?? {}) },
+        style: { ...SAVED_DEFAULT_SETTINGS.style, ...(remoteSettings.style ?? {}) },
+      }
+    : SAVED_DEFAULT_SETTINGS;
+  const settings: SiteSettings = baseDefaults;
 
   return (
     <div className="space-y-6">
