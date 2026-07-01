@@ -24,6 +24,13 @@ type Dashboard = {
     finished_at: string | null;
   } | null;
   handling_fee_percent: number;
+  content_settings: {
+    banner_title: string;
+    banner_description: string;
+    promo_text_l: string;
+    promo_text_c: string;
+    promo_text_r: string;
+  };
 };
 
 export default async function AdminPage() {
@@ -83,6 +90,61 @@ export default async function AdminPage() {
                   className="w-28 rounded-md border border-slate-300 px-3 py-2"
                 />
                 <Button type="submit" variant="secondary">Save</Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Homepage text</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action="/api/admin/content" method="post" className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium">Banner title</label>
+                    <input
+                      name="banner_title"
+                      defaultValue={dashboard.content_settings.banner_title}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Banner description</label>
+                    <input
+                      name="banner_description"
+                      defaultValue={dashboard.content_settings.banner_description}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <label className="block text-sm font-medium">Text L</label>
+                    <input
+                      name="promo_text_l"
+                      defaultValue={dashboard.content_settings.promo_text_l}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Text C</label>
+                    <input
+                      name="promo_text_c"
+                      defaultValue={dashboard.content_settings.promo_text_c}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium">Text R</label>
+                    <input
+                      name="promo_text_r"
+                      defaultValue={dashboard.content_settings.promo_text_r}
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                    />
+                  </div>
+                </div>
+                <Button type="submit" variant="secondary">Save homepage text</Button>
               </form>
             </CardContent>
           </Card>

@@ -5,7 +5,7 @@ from datetime import datetime
 from app.api.routes.auth import get_db, require_admin
 from app.core.config import get_settings
 from app.models import AppSetting, ApprovalStatus, Product, RequestListItem, ScrapeRun, User
-from app.schemas import HandlingFeePayload, ScrapeResult, UserRead
+from app.schemas import ContentSettingsPayload, HandlingFeePayload, ScrapeResult, UserRead
 from app.services.exchange import get_aud_to_lkr_rate
 from app.services.pricing import calculate_lkr_price, choose_reference_price
 from app.workers.tasks import trigger_scrape
@@ -128,6 +128,8 @@ def dashboard(admin=Depends(require_admin), db=Depends(get_db)):
     requests_total = db.execute(select(func.count(RequestListItem.id))).scalar_one()
     latest_run = db.execute(select(ScrapeRun).order_by(ScrapeRun.started_at.desc())).scalars().first()
     fee = db.execute(select(AppSetting).where(AppSetting.key == "handling_fee_percent")).scalar_one_or_none()
+    banners = db.execute(select(AppSetting).where(AppSetting.key.in_(["banner_title", "banner_description", "promo_text_l", "promo_text_c", "promo_text_r"]))).scalars().all()
+    banner_map = {row.key: row.value for row in banners}
     return {
         "users_total": users_total,
         "pending_users": pending_users,
@@ -148,6 +150,13 @@ def dashboard(admin=Depends(require_admin), db=Depends(get_db)):
             "finished_at": latest_run.finished_at,
         },
         "handling_fee_percent": float(fee.value) if fee else get_settings().handling_fee_percent,
+        "content_settings": {
+            "banner_title": banner_map.get("banner_title", "OzLanka Outdoor Gear"),
+            "banner_description": banner_map.get("banner_description", ""),
+            "promo_text_l": banner_map.get("promo_text_l", ""),
+            "promo_text_c": banner_map.get("promo_text_c", ""),
+            "promo_text_r": banner_map.get("promo_text_r", ""),
+        },
     }
 
 
@@ -172,6 +181,25 @@ def update_handling_fee(payload: HandlingFeePayload, admin=Depends(require_admin
         setting.value = str(payload.handling_fee_percent)
     db.commit()
     return {"handling_fee_percent": payload.handling_fee_percent}
+
+
+def _set_setting(db, key: str, value: str):
+    setting = db.execute(select(AppSetting).where(AppSetting.key == key)).scalar_one_or_none()
+    if setting is None:
+        db.add(AppSetting(key=key, value=value))
+    else:
+        setting.value = value
+
+
+@router.post("/settings/content")
+def update_content_settings(payload: ContentSettingsPayload, admin=Depends(require_admin), db=Depends(get_db)):
+    _set_setting(db, "banner_title", payload.banner_title)
+    _set_setting(db, "banner_description", payload.banner_description)
+    _set_setting(db, "promo_text_l", payload.promo_text_l)
+    _set_setting(db, "promo_text_c", payload.promo_text_c)
+    _set_setting(db, "promo_text_r", payload.promo_text_r)
+    db.commit()
+    return payload.model_dump()
 
 
 @router.post("/scrape/trigger", response_model=ScrapeResult)

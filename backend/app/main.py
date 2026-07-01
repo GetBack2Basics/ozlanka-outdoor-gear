@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.routes import admin, auth, health, products, requests
+from app.api.routes import admin, auth, health, products, public, requests
 from app.core.config import get_settings
 from app.core.database import Base, engine
 from app.core.security import hash_password
