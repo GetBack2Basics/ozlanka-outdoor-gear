@@ -1,0 +1,27 @@
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Generated / runtime artifacts
+frontend/.next/
+*.log

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 const backendUrl =
   process.env.NEXT_PUBLIC_BACKEND_URL ??
   process.env.BACKEND_INTERNAL_URL ??
-  "http://185.208.207.241:8000";
+  "http://backend:8000";
 
 export async function backendFetch(path: string, init: RequestInit = {}) {
   return fetch(`${backendUrl}${path}`, {

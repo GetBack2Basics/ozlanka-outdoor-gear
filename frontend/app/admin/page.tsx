@@ -101,7 +101,9 @@ export default async function AdminPage() {
                   </div>
                   <form action="/api/admin/approve" method="post">
                     <input type="hidden" name="user_id" value={user.id} />
-                    <Button type="submit" variant="secondary">Approve</Button>
+                    <button type="submit" className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">
+                      Approve
+                    </button>
                   </form>
                 </div>
               ))}

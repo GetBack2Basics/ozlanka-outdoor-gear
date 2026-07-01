@@ -76,6 +76,14 @@ class HandlingFeePayload(BaseModel):
     handling_fee_percent: float
 
 
+class ContentSettingsPayload(BaseModel):
+    banner_title: str
+    banner_description: str
+    promo_text_l: str
+    promo_text_c: str
+    promo_text_r: str
+
+
 class ScrapeResult(BaseModel):
     run_id: int
     message: str
