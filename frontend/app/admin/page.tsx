@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrapePanel } from "@/components/admin/scrape-panel";
 import { backendFetchWithAuth } from "@/lib/backend";
+import { ContentSettingsForm } from "@/components/admin/content-settings-form";
 
 type Dashboard = {
   users_total: number;
@@ -99,53 +100,7 @@ export default async function AdminPage() {
               <CardTitle>Homepage text</CardTitle>
             </CardHeader>
             <CardContent>
-              <form action="/api/admin/content" method="post" className="space-y-3">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium">Banner title</label>
-                    <input
-                      name="banner_title"
-                      defaultValue={dashboard.content_settings.banner_title}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium">Banner description</label>
-                    <input
-                      name="banner_description"
-                      defaultValue={dashboard.content_settings.banner_description}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div>
-                    <label className="block text-sm font-medium">Text L</label>
-                    <input
-                      name="promo_text_l"
-                      defaultValue={dashboard.content_settings.promo_text_l}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium">Text C</label>
-                    <input
-                      name="promo_text_c"
-                      defaultValue={dashboard.content_settings.promo_text_c}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium">Text R</label>
-                    <input
-                      name="promo_text_r"
-                      defaultValue={dashboard.content_settings.promo_text_r}
-                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" variant="secondary">Save homepage text</Button>
-              </form>
+              <ContentSettingsForm initial={dashboard.content_settings} />
             </CardContent>
           </Card>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { backendFetchWithAuth } from "@/lib/backend";
+import { adminRedirect } from "@/lib/admin-redirect";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -15,5 +16,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to update handling fee" }, { status: response.status });
   }
 
-  return NextResponse.redirect(new URL("/admin", request.url));
+  return adminRedirect(request);
 }

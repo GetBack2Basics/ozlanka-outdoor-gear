@@ -74,9 +74,13 @@ export default async function HomePage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        {[settings.promo_text_l, settings.promo_text_c, settings.promo_text_r].map((item) => (
-          <Card key={item}>
-            <CardTitle>{item}</CardTitle>
+        {[
+          ["Text L", settings.promo_text_l],
+          ["Text C", settings.promo_text_c],
+          ["Text R", settings.promo_text_r],
+        ].map(([label, item]) => (
+          <Card key={label}>
+            <CardTitle>{label}</CardTitle>
             <CardContent>
               <p className="text-sm text-slate-600">{item}</p>
             </CardContent>
