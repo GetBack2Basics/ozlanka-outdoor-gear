@@ -28,8 +28,12 @@ type Dashboard = {
   content_settings: {
     banner_title: string;
     banner_description: string;
+    logo_image_url: string;
+    promo_title_l: string;
     promo_text_l: string;
+    promo_title_c: string;
     promo_text_c: string;
+    promo_title_r: string;
     promo_text_r: string;
   };
 };

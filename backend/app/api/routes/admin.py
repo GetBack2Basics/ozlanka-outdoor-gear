@@ -116,7 +116,6 @@ DEMO_PRODUCTS = [
 ]
 
 
-
 @router.get("/dashboard")
 def dashboard(admin=Depends(require_admin), db=Depends(get_db)):
     users_total = db.execute(select(func.count(User.id))).scalar_one()
@@ -128,7 +127,12 @@ def dashboard(admin=Depends(require_admin), db=Depends(get_db)):
     requests_total = db.execute(select(func.count(RequestListItem.id))).scalar_one()
     latest_run = db.execute(select(ScrapeRun).order_by(ScrapeRun.started_at.desc())).scalars().first()
     fee = db.execute(select(AppSetting).where(AppSetting.key == "handling_fee_percent")).scalar_one_or_none()
-    banners = db.execute(select(AppSetting).where(AppSetting.key.in_(["banner_title", "banner_description", "promo_text_l", "promo_text_c", "promo_text_r"]))).scalars().all()
+    banners = db.execute(select(AppSetting).where(AppSetting.key.in_([
+        "banner_title", "banner_description", "logo_image_url",
+        "promo_title_l", "promo_text_l",
+        "promo_title_c", "promo_text_c",
+        "promo_title_r", "promo_text_r",
+    ]))).scalars().all()
     banner_map = {row.key: row.value for row in banners}
     return {
         "users_total": users_total,
@@ -153,8 +157,12 @@ def dashboard(admin=Depends(require_admin), db=Depends(get_db)):
         "content_settings": {
             "banner_title": banner_map.get("banner_title", "OzLanka Outdoor Gear"),
             "banner_description": banner_map.get("banner_description", ""),
+            "logo_image_url": banner_map.get("logo_image_url", ""),
+            "promo_title_l": banner_map.get("promo_title_l", ""),
             "promo_text_l": banner_map.get("promo_text_l", ""),
+            "promo_title_c": banner_map.get("promo_title_c", ""),
             "promo_text_c": banner_map.get("promo_text_c", ""),
+            "promo_title_r": banner_map.get("promo_title_r", ""),
             "promo_text_r": banner_map.get("promo_text_r", ""),
         },
     }
@@ -195,8 +203,12 @@ def _set_setting(db, key: str, value: str):
 def update_content_settings(payload: ContentSettingsPayload, admin=Depends(require_admin), db=Depends(get_db)):
     _set_setting(db, "banner_title", payload.banner_title)
     _set_setting(db, "banner_description", payload.banner_description)
+    _set_setting(db, "logo_image_url", payload.logo_image_url)
+    _set_setting(db, "promo_title_l", payload.promo_title_l)
     _set_setting(db, "promo_text_l", payload.promo_text_l)
+    _set_setting(db, "promo_title_c", payload.promo_title_c)
     _set_setting(db, "promo_text_c", payload.promo_text_c)
+    _set_setting(db, "promo_title_r", payload.promo_title_r)
     _set_setting(db, "promo_text_r", payload.promo_text_r)
     db.commit()
     return payload.model_dump()
@@ -270,4 +282,3 @@ def seed_demo_products(admin=Depends(require_admin), db=Depends(get_db)):
         inserted += 1
     db.commit()
     return {"inserted": inserted}
-

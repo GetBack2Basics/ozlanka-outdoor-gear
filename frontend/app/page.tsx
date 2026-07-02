@@ -20,16 +20,24 @@ type Product = {
 type PublicSettings = {
   banner_title: string;
   banner_description: string;
+  logo_image_url: string;
+  promo_title_l: string;
   promo_text_l: string;
+  promo_title_c: string;
   promo_text_c: string;
+  promo_title_r: string;
   promo_text_r: string;
 };
 
 const DEFAULT_SETTINGS: PublicSettings = {
   banner_title: "OzLanka Outdoor Gear",
   banner_description: "Request outdoor gear from Australia with manual approval, LKR pricing, and clear shipping and customs terms.",
+  logo_image_url: "",
+  promo_title_l: "Shipping updates",
   promo_text_l: "8 weeks shipping target",
+  promo_title_c: "Important",
   promo_text_c: "Customer pays customs in Colombo",
+  promo_title_r: "Fees",
   promo_text_r: "Handling fee defaults to 25%",
 };
 
@@ -59,7 +67,12 @@ export default async function HomePage() {
     <main className="space-y-8">
       <section className="rounded-3xl bg-slate-950 p-8 text-white">
         <Badge className="bg-amber-300 text-slate-950">MVP</Badge>
-        <h1 className="mt-4 text-4xl font-bold">{settings.banner_title}</h1>
+        <div className="mt-4 flex items-center gap-4">
+          {settings.logo_image_url ? (
+            <img src={settings.logo_image_url} alt="Logo" className="h-12 w-12 rounded-md object-cover" />
+          ) : null}
+          <h1 className="text-4xl font-bold">{settings.banner_title}</h1>
+        </div>
         <p className="mt-3 max-w-2xl text-slate-200">
           {settings.banner_description}
         </p>
@@ -75,14 +88,14 @@ export default async function HomePage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         {[
-          ["Text L", settings.promo_text_l],
-          ["Text C", settings.promo_text_c],
-          ["Text R", settings.promo_text_r],
-        ].map(([label, item]) => (
-          <Card key={label}>
-            <CardTitle>{label}</CardTitle>
+          [settings.promo_title_l, settings.promo_text_l],
+          [settings.promo_title_c, settings.promo_text_c],
+          [settings.promo_title_r, settings.promo_text_r],
+        ].map(([title, body]) => (
+          <Card key={title}>
+            <CardTitle>{title}</CardTitle>
             <CardContent>
-              <p className="text-sm text-slate-600">{item}</p>
+              <p className="text-sm text-slate-600">{body}</p>
             </CardContent>
           </Card>
         ))}

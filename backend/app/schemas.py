@@ -79,8 +79,12 @@ class HandlingFeePayload(BaseModel):
 class ContentSettingsPayload(BaseModel):
     banner_title: str
     banner_description: str
+    logo_image_url: str
+    promo_title_l: str
     promo_text_l: str
+    promo_title_c: str
     promo_text_c: str
+    promo_title_r: str
     promo_text_r: str
 
 
